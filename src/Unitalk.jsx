@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Globe, Volume2, Copy, ThumbsUp, ThumbsDown, Mic, Settings, Languages, Sparkles } from 'lucide-react';
+import './Unitalk.css';
+
 
 const Unitalk = () => {
   const [messages, setMessages] = useState([
