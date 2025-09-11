@@ -6,7 +6,7 @@
 
 // import Button from './button/Button.jsx'
 
-import Unitalk from "./Unitalk.jsx";
+import Unitalk from "./Unitalk.jsx";     // CHATBOT PROJECT 
 
 function App() {
   

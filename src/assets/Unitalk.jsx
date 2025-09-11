@@ -5,7 +5,6 @@ import {
   Sparkles, Menu, X, ChevronLeft, ChevronRight, Paperclip, Image, FileText,
   Sun, Moon
 } from 'lucide-react';
-import LanguageSelect from "./assets/LanguageSelect";
 
 const Unitalk = () => {
   // --- Core chat state ---
@@ -158,31 +157,32 @@ const Unitalk = () => {
     setAttachedFiles([]); // clear after sending
     setIsTyping(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const responses = {
-        'en': "I detected English! I can help you in any language.",
-        'hi': "मैंने हिंदी पहचानी! मैं किसी भी भाषा में मदद कर सकता हूं।",
-        'es': "¡Detecté español! Puedo ayudarte en cualquier idioma.",
-        'fr': "J'ai détecté le français ! Je peux vous aider dans n'importe quelle langue.",
-        'de': "Ich habe Deutsch erkannt! Ich kann dir in jeder Sprache helfen.",
-        'ja': "日本語を検出しました！どの言語でもお手伝いできます。",
-        'ko': "한국어를 감지했습니다! 어떤 언어로든 도와드릴 수 있습니다。",
-        'ar': "لقد اكتشفت العربية! يمكنني مساعدتك بأي لغة."
-      };
+// === Replace this in handleSendMessage ===
+try {
+  const res = await fetch("http://127.0.0.1:5000/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      message: newUserMsg.text, 
+      language: selectedLanguage 
+    })
+  });
+  const data = await res.json();
 
-      const botMessage = {
-        id: Date.now() + 1,
-        text: responses[detectedLang] || responses.en,
-        sender: 'bot',
-        language: detectedLang,
-        timestamp: new Date().toLocaleTimeString(),
-        translated: detectedLang !== 'en' ? responses.en : undefined
-      };
-      setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
-    }, 1000);
+  const botMessage = {
+    id: Date.now() + 1,
+    text: data.reply,
+    sender: 'bot',
+    language: selectedLanguage,
+    timestamp: new Date().toLocaleTimeString()
   };
+  setMessages(prev => [...prev, botMessage]);
+} catch (err) {
+  console.error("Error fetching chatbot reply:", err);
+} finally {
+  setIsTyping(false);
+}
+
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -252,16 +252,23 @@ const Unitalk = () => {
               </div>
             </div>
 
-            <div className="mb-4">
-            <p className="flex items-center gap-2 text-gray-300 mb-2">
-              🌐 Select Language
-            </p>
-            <LanguageSelect
-              languages={languages}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
-            />
-          </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
+                <Languages className="w-4 h-4" />
+                Select Language
+              </label>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-800/50 backdrop-blur text-white"
+              >
+                {languages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="space-y-4 mb-8">
               <div className="p-4 bg-gradient-to-r from-indigo-900/20 to-purple-900/10 rounded-xl border border-indigo-500/10">
@@ -520,5 +527,5 @@ const Unitalk = () => {
   );
 };
 
+}
 export default Unitalk;
-
