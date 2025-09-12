@@ -1,26 +1,16 @@
-// import Header from './Header.jsx'
-// import Footer from './Footer.jsx'
-// import Food from './Food.jsx'
+import {Routes, Route} from 'react-router-dom';
 
-// import Card from './Card.jsx'
-
-// import Button from './button/Button.jsx'
+import UnitalkLanding from "./Uni_Webpage.jsx";
 
 import Unitalk from "./Unitalk.jsx";     // CHATBOT PROJECT 
 
 function App() {
   
   return(
-    // <>
-    //   <Header/>
-    //   <Food/>
-    //   <Footer/>
-    // </>
-
-
-    // <Card/>
-
-    <Unitalk/>
+    <Routes>
+      <Route path="/" element={<UnitalkLanding/>} />
+      <Route path="/Unitalk" element={<Unitalk/>} />
+    </Routes>
 
   );
 }

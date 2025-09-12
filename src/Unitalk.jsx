@@ -1,5 +1,6 @@
 // Unitalk.jsx
 import React, { useState, useRef, useEffect } from 'react';
+import {useNavigate} from 'react-router-dom';
 import {
   Send, Globe, Volume2, Copy, ThumbsUp, ThumbsDown, Mic, Settings, Languages,
   Sparkles, Menu, X, ChevronLeft, ChevronRight, Paperclip, Image, FileText,
