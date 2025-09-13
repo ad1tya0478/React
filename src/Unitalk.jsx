@@ -1,25 +1,18 @@
 // Unitalk.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import {useNavigate} from 'react-router-dom';
 import {
   Send, Globe, Volume2, Copy, ThumbsUp, ThumbsDown, Mic, Settings, Languages,
   Sparkles, Menu, X, ChevronLeft, ChevronRight, Paperclip, Image, FileText,
-  Sun, Moon
+  Sun, Moon, Plus, Trash2
 } from 'lucide-react';
 import LanguageSelect from "./assets/LanguageSelect";
 
 const Unitalk = () => {
-  // --- Core chat state ---
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "नमस्ते! मैं Unitalk हूं। मैं किसी भी भाषा में आपकी मदद कर सकता हूं। आप किस भाषा में बात करना चाहेंगे?",
-      sender: 'bot',
-      language: 'hi',
-      timestamp: new Date().toLocaleTimeString(),
-      translated: "Hello! I'm Unitalk. I can help you in any language. Which language would you like to chat in?"
-    }
-  ]);
+  // --- Chat sessions state ---
+  const [sessions, setSessions] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const currentSession = sessions.find(s => s.id === currentSessionId);
+  const messages = currentSession?.messages || [];
   const [inputText, setInputText] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [isTyping, setIsTyping] = useState(false);
@@ -114,6 +107,69 @@ const Unitalk = () => {
   };
   useEffect(() => { scrollToBottom(); }, [messages, isTyping, attachedFiles]);
 
+  // --- Load and persist sessions ---
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('unitalk_sessions_v1');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSessions(parsed);
+          setCurrentSessionId(parsed[0].id);
+          return;
+        }
+      }
+      const newId = Date.now().toString();
+      const initial = [{ id: newId, title: 'New chat', messages: [], createdAt: Date.now(), updatedAt: Date.now() }];
+      setSessions(initial);
+      setCurrentSessionId(newId);
+    } catch (e) {
+      console.error('Failed to load sessions', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('unitalk_sessions_v1', JSON.stringify(sessions));
+    } catch (e) {
+      console.error('Failed to persist sessions', e);
+    }
+  }, [sessions]);
+
+  const createNewSession = () => {
+    const newId = Date.now().toString();
+    const newSession = { id: newId, title: 'New chat', messages: [], createdAt: Date.now(), updatedAt: Date.now() };
+    setSessions(prev => [newSession, ...prev]);
+    setCurrentSessionId(newId);
+  };
+
+  const deleteSession = (e, id) => {
+    e.stopPropagation();
+    setSessions(prev => {
+      const filtered = prev.filter(s => s.id !== id);
+      if (filtered.length === 0) {
+        const newId = Date.now().toString();
+        const newSession = { id: newId, title: 'New chat', messages: [], createdAt: Date.now(), updatedAt: Date.now() };
+        setCurrentSessionId(newId);
+        return [newSession];
+      }
+      if (id === currentSessionId) {
+        setCurrentSessionId(filtered[0].id);
+      }
+      return filtered;
+    });
+  };
+
+  const generateTitleFromText = (text) => {
+    const cleaned = (text || '').replace(/\s+/g, ' ').trim();
+    if (!cleaned) return 'New chat';
+    if (cleaned.length <= 30) return cleaned;
+    const slice = cleaned.slice(0, 30);
+    const lastSpace = slice.lastIndexOf(' ');
+    const trimmed = lastSpace > 10 ? slice.slice(0, lastSpace) : slice;
+    return trimmed + '…';
+  };
+
   // --- Simple/mock language detection (keeps original) ---
   const [detectedLanguage, setDetectedLanguage] = useState(null);
   const [isLanguageDetecting, setIsLanguageDetecting] = useState(false);
@@ -154,7 +210,16 @@ const Unitalk = () => {
       files: attachedFiles.map(f => ({ id: f.id, name: f.name, type: f.type, url: f.url }))
     };
 
-    setMessages(prev => [...prev, newUserMsg]);
+    setSessions(prev => prev.map(s => {
+      if (s.id !== currentSessionId) return s;
+      const shouldTitle = !s.title || s.title === 'New chat';
+      return {
+        ...s,
+        title: shouldTitle ? generateTitleFromText(newUserMsg.text) : s.title,
+        messages: [...s.messages, newUserMsg],
+        updatedAt: Date.now()
+      };
+    }));
     setInputText('');
     setAttachedFiles([]); // clear after sending
     setIsTyping(true);
@@ -180,7 +245,10 @@ const Unitalk = () => {
         timestamp: new Date().toLocaleTimeString(),
         translated: detectedLang !== 'en' ? responses.en : undefined
       };
-      setMessages(prev => [...prev, botMessage]);
+      setSessions(prev => prev.map(s => {
+        if (s.id !== currentSessionId) return s;
+        return { ...s, messages: [...s.messages, botMessage], updatedAt: Date.now() };
+      }));
       setIsTyping(false);
     }, 1000);
   };
@@ -247,10 +315,38 @@ const Unitalk = () => {
               <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold {themeClasses.text} text-white">Unitalk</h1>
-                <p className="text-sm text-gray-400">Language Agnostic AI</p>
-              </div>
+            </div>
+
+            <button
+              onClick={createNewSession}
+              className={`w-full mb-4 flex items-center gap-2 p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-gray-800/60 hover:bg-gray-800 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'}`}
+            >
+              <Plus className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+              <span>New chat</span>
+            </button>
+
+            <div className="flex-1 overflow-y-auto space-y-1 mb-4">
+              {[...sessions].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setCurrentSessionId(s.id)}
+                  className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
+                    s.id === currentSessionId
+                      ? (isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900')
+                      : (isDarkMode ? 'hover:bg-gray-800/60 text-gray-300' : 'hover:bg-gray-100 text-gray-700')
+                  }`}
+                  title={s.title || 'New chat'}
+                >
+                  <span className="truncate pr-2">{s.title || 'New chat'}</span>
+                  <button
+                    onClick={(e) => deleteSession(e, s.id)}
+                    className={`ml-2 p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+                    title="Delete chat"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </button>
+              ))}
             </div>
 
             <div className="mb-4">
