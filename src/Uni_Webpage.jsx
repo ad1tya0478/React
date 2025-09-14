@@ -446,25 +446,7 @@ const UnitalkLanding = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section ref={statsRef} className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center scroll-animate">
-            <div className={`${themeClasses.cardBg} backdrop-blur-lg border rounded-2xl p-8 transform hover:scale-105 transition-all duration-300`}>
-              <div className="text-4xl font-bold text-indigo-400 mb-2">{stats.users.toLocaleString()}+</div>
-              <div className={`${themeClasses.textSecondary} font-medium`}>Active Users</div>
-            </div>
-            <div className={`${themeClasses.cardBg} backdrop-blur-lg border rounded-2xl p-8 transform hover:scale-105 transition-all duration-300`}>
-              <div className="text-4xl font-bold text-purple-400 mb-2">{stats.languages}+</div>
-              <div className={`${themeClasses.textSecondary} font-medium`}>Languages Supported</div>
-            </div>
-            <div className={`${themeClasses.cardBg} backdrop-blur-lg border rounded-2xl p-8 transform hover:scale-105 transition-all duration-300`}>
-              <div className="text-4xl font-bold text-green-400 mb-2">{stats.translations.toLocaleString()}+</div>
-              <div className={`${themeClasses.textSecondary} font-medium`}>Translations Made</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      
 
       {/* Features Section */}
       <section id="features" ref={featuresRef} className="py-20 px-4 sm:px-6 lg:px-8">
